@@ -2,28 +2,26 @@ import re
 import json
 import speech_recognition as sr
 import google.generativeai as genai
+from datetime import datetime
+from ummalqura.hijri_date import HijriDate
 
 # Configure Google AI API
-google_api_key = "AIzaSyCpmcWbSmE3UwTZwNuHd3yHHQnqfyyTR30"  # Your API key
+google_api_key = "AIzaSyCpmcWbSmE3UwTZwNuHd3yHHQnqfyyTR30"  # Replace with your actual API key
 genai.configure(api_key=google_api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
-
-# Function to get AI-generated post
+# Function to get AI-generated content
 def get_completion(prompt, temp=0.9):
     response = model.generate_content(
         prompt,
         generation_config=genai.types.GenerationConfig(temperature=temp),
-        safety_settings=[],  # Remove any filters causing partial responses
+        safety_settings=[]
     )
-    return response.text
+    return response  # Return the full response object
 
-
+# Extract JSON from response
 def extract_json(text):
-    """Extracts JSON data from a raw text response"""
-    match = re.search(
-        r"\{.*\}", text, re.DOTALL
-    )  # Extract anything between `{}` brackets
+    match = re.search(r"\{.*\}", text, re.DOTALL)  # Extract anything between `{}` brackets
     if match:
         try:
             return json.loads(match.group())  # Convert to Python dictionary
@@ -31,9 +29,33 @@ def extract_json(text):
             pass
     return None
 
+# Unified Content Generation
+def generate_content(user_input, platform, length, audience_level, islamic_mode=False, scholar=None, islamic_topic=None):
+    if islamic_mode:
+        # Build the query based on user inputs
+        base_query = ""
+        if islamic_topic != "Custom Input":
+            base_query += f"Focus on {islamic_topic}"
+        if user_input.strip() and (user_input != islamic_topic):
+            base_query += f": {user_input}" if base_query else user_input
 
-def LLM_prompt(input_message, platform, post_length, audience_level):
-    prompt = f"""
+        prompt = f"""
+        Create {platform}-appropriate Islamic content that:
+        1. Combines: {base_query or 'General Islamic Teachings'}
+        2. Uses {scholar}'s methodology
+        3. Includes Quran/Hadith references
+        4. Audience level: {audience_level}
+        5. Length: {length}
+        
+        Return JSON format:
+        {{
+            "Generated_post": "Formatted content...",
+            "Additional_Topics": ["3 related topics"]
+        }}
+        """
+    else:
+        # Original social media prompt
+        prompt = f"""
         Your task is to generate engaging social media posts based on the given user input.  
 
         - Analyze the user's message intent and context.  
@@ -41,6 +63,7 @@ def LLM_prompt(input_message, platform, post_length, audience_level):
         - Ensure the post includes unique facts about the chosen topic that will captivate the audience.
         - Optimize for the target audience and preferred post length.  
         - Ensure the content is relevant, engaging, and fits the platform’s style.
+        - Use {audience_level}-level language.
         
         Return ONLY JSON format (no extra text).  
 
@@ -55,23 +78,76 @@ def LLM_prompt(input_message, platform, post_length, audience_level):
         User Input:  
         ```json
         {{
-            "message": "{input_message}",
+            "message": "{user_input}",
             "target_platform": "{platform}",
-            "post_length": "{post_length}",
+            "post_length": "{length}",
             "audience_level": "{audience_level}"
         }} 
         ```
+        """
+
+    response = get_completion(prompt)
+    return extract_json(response.text)
+    
+# Get current Gregorian month and year
+gregorian_month = datetime.now().strftime("%B")  # e.g., "March"
+gregorian_year = datetime.now().year  # e.g., 2025
+
+# Get current Hijri month and year
+hijri_date = HijriDate.today()
+hijri_month = hijri_date.month_name  # e.g., "Sha'ban"
+hijri_year = hijri_date.year  # e.g., 1446
+
+def get_dynamic_topics():
+    """Fetch trending Shia Islamic topics based on both Gregorian & Hijri months and years."""
+    
+    # Format the prompt with both calendar systems
+    prompt = f"""
+    Suggest **10 trending Shia Islamic discussion topics** for {gregorian_month} {gregorian_year} ({hijri_month} {hijri_year}).
+    The topics must be **short (3-4 words each)**.
+    
+    Format the response as a JSON array:
+    {{
+        "topics": ["Topic 1", ..., "Topic 10"]
+    }}
     """
 
-    response_text = get_completion(prompt)
+    try:
+        response = model.generate_content(prompt)
+        data = extract_json(response.text)
+        return data.get("topics", get_default_topics())
+    except:
+        return get_default_topics()
 
-    # Try extracting JSON
-    response_data = extract_json(response_text)
+def get_default_topics():
+    """Fallback topics"""
+    return [
+        "Social Justice",
+        "Family Values",
+        "Modern Challenges",
+        "Spiritual Growth",
+        "Daily Worship",
+        "Community Service",
+        "Personal Development",
+        "Faith & Reason",
+        "Ethical Living",
+        "Interfaith Dialogue"
+    ]
 
-    if response_data:
-        return response_data  # Valid JSON found
-    else:
-        return {
-            "Generated_post": "⚠️ AI response was not in expected format. Try again.",
-            "Additional_Topics": [],
-        }
+# Add to main.py
+def get_related_questions(topic):
+    """Generate 3 discussion questions related to an Islamic topic"""
+    prompt = f"""
+    Provide **3 trending Islamic discussion questions** about '{topic}' that are highly relevant in **{hijri_month} {hijri_year}**.
+
+    - Keep each question **very short (max 7-10 words)**.
+    - Focus on **what Muslims are discussing this month**.
+    
+    Return as JSON: {{"questions": ["Question 1", ...]}}
+    """
+    try:
+        response = model.generate_content(prompt)
+        data = extract_json(response.text)
+        return data.get("questions", [f"Explain {topic}", f"Importance of {topic}", f"How to practice {topic}?"])
+    except:
+        return [f"Explain {topic}", f"Importance of {topic}", f"How to practice {topic}?"]
