@@ -1,17 +1,27 @@
 import streamlit as st
-from main import *
+import speech_recognition as sr
+from main import post_generator, prompt_selector  # Import topic generator function
 
 # Streamlit UI
 st.title("AI Social Media Content Generator")
-st.markdown("Transform your ideas into platform-ready content!")
+st.markdown("Transform your ideas into platform-ready content! 🚀")
 
-# Initialize session state for user input
+# Initialize session state
 if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 
-# User input
-input_mode = st.radio("Choose input method:", ["Text", "Voice"], horizontal=True)
+if "voice_text" not in st.session_state:
+    st.session_state.voice_text = ""
 
+if "generated_post" not in st.session_state:
+    st.session_state.generated_post = ""
+
+if "additional_topics" not in st.session_state:
+    st.session_state.additional_topics = []
+
+
+# User input mode
+input_mode = st.radio("Choose input method:", ["Text", "Voice"], horizontal=True)
 recognizer = sr.Recognizer()
 
 if input_mode == "Text":
@@ -21,9 +31,6 @@ if input_mode == "Text":
         value=st.session_state.user_input,
     )
 else:
-    if "voice_text" not in st.session_state:
-        st.session_state.voice_text = ""
-
     if st.button("🎤 Start Recording"):
         with st.spinner("Listening... 🎧"):
             try:
@@ -39,10 +46,9 @@ else:
             except sr.RequestError:
                 st.error("Error with the speech recognition service.")
 
-    if st.session_state.voice_text:
-        user_input = st.text_area(
-            "Edit Transcribed Text:", value=st.session_state.voice_text
-        )
+    user_input = st.text_area(
+        "Edit Transcribed Text:", value=st.session_state.voice_text
+    )
 
 # Platform selection
 platform = st.selectbox(
@@ -59,23 +65,24 @@ if st.button("Generate Content ✨"):
         st.error("Please enter some text or record your voice!")
     else:
         with st.spinner("🧠 Generating content..."):
-            response_data = LLM_prompt(
-                user_input, platform, post_length, audience_level
+            prompt_type = platform.lower()
+            prompt = prompt_selector(
+                platform.lower(), user_input, post_length, audience_level, prompt_type
             )
+            response_data = post_generator(prompt)
 
-        # Store generated post in session state
         st.session_state.generated_post = response_data["Generated_post"]
         st.session_state.additional_topics = response_data["Additional_Topics"]
 
-# Display generated content if available
-if "generated_post" in st.session_state:
+# Display generated content
+if st.session_state.generated_post:
     st.markdown("### 🎉 Generated Post")
     st.write(st.session_state.generated_post)
 
-# Display additional topics as clickable buttons
-if "additional_topics" in st.session_state and st.session_state.additional_topics:
+# Display additional topics
+if st.session_state.additional_topics:
     st.markdown("### 🔥 Additional Topics")
-    for topic in st.session_state.additional_topics:
-        if st.button(topic, key=topic):
-            st.session_state.user_input = topic  # Update user input
-            st._rerun()  # Refresh the page to reflect the change
+    for index, topic in enumerate(st.session_state.additional_topics):
+        if st.button(topic, key=f"topic_{index}"):
+            st.session_state.user_input = topic  # Update input with topic
+            st._rerun()  # Refresh the UI

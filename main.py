@@ -3,6 +3,8 @@ import json
 import speech_recognition as sr
 import google.generativeai as genai
 
+from prompts import *
+
 # Configure Google AI API
 google_api_key = "AIzaSyCpmcWbSmE3UwTZwNuHd3yHHQnqfyyTR30"  # Your API key
 genai.configure(api_key=google_api_key)
@@ -32,37 +34,24 @@ def extract_json(text):
     return None
 
 
-def LLM_prompt(input_message, platform, post_length, audience_level):
-    prompt = f"""
-        Your task is to generate engaging social media posts based on the given user input.  
+def prompt_selector(
+    input_message, platform, post_length, audience_level, prompt_type="general"
+):
+    if prompt_type == "facebook":
+        return facebook_prompt(input_message, platform, post_length, audience_level)
 
-        - Analyze the user's message intent and context.  
-        - Generate a compelling idea that aligns with the chosen platform.  
-        - Ensure the post includes unique facts about the chosen topic that will captivate the audience.
-        - Optimize for the target audience and preferred post length.  
-        - Ensure the content is relevant, engaging, and fits the platform’s style.
-        
-        Return ONLY JSON format (no extra text).  
+    elif prompt_type == "twitter":
+        return twitter_prompt(input_message, platform, post_length, audience_level)
 
-        **Strictly format response as JSON:**  
-        ```json
-        {{
-            "Generated_post": "Engaging post text",
-            "Additional_Topics": ["Topic 1", "Topic 2", "Topic 3"]
-        }}
-        ```
+    elif prompt_type == "linkedin":
+        return linkedin_prompt(input_message, platform, post_length, audience_level)
 
-        User Input:  
-        ```json
-        {{
-            "message": "{input_message}",
-            "target_platform": "{platform}",
-            "post_length": "{post_length}",
-            "audience_level": "{audience_level}"
-        }} 
-        ```
-    """
+    else:
+        return general_prompt(input_message, platform, post_length, audience_level)
 
+
+def post_generator(prompt):
+    """Generates a social media post using AI"""
     response_text = get_completion(prompt)
 
     # Try extracting JSON
