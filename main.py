@@ -33,20 +33,21 @@ def extract_json(text):
             pass
     return None
 
-def prompt_selector(
-    input_message, platform, post_length, audience_level, prompt_type="general"
-):
+def prompt_selector(input_message, platform, post_length, audience_level, prompt_type="general", isAdvanced=False):
+    # Use general prompt for non-advanced mode
+    if not isAdvanced:
+        return general_prompt(input_message, platform, post_length, audience_level)
+    
+    # Platform-specific prompts for advanced mode
     if prompt_type == "facebook":
         return facebook_prompt(input_message, platform, post_length, audience_level)
-
     elif prompt_type == "twitter":
         return twitter_prompt(input_message, platform, post_length, audience_level)
-
     elif prompt_type == "linkedin":
         return linkedin_prompt(input_message, platform, post_length, audience_level)
-
-    else:
-        return general_prompt(input_message, platform, post_length, audience_level)
+    
+    # Fallback to general prompt
+    return general_prompt(input_message, platform, post_length, audience_level)
 
 # Get current Gregorian month and year
 gregorian_month = datetime.now().strftime("%B")  # e.g., "March"

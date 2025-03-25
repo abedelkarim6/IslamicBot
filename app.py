@@ -54,6 +54,9 @@ with col2:
 with col3:
     audience_level = st.selectbox("Audience Level:", ["Beginner", "Intermediate", "Expert"])
 
+advanced_mode = st.checkbox("Advanced Mode 🚀", 
+                          help="Uses platform-specific prompts with algorithm-friendly features")
+
 # --- Voice Input Handler ---
 def handle_voice_input():
     st.markdown('<div class="center-button">', unsafe_allow_html=True)
@@ -77,10 +80,6 @@ def handle_voice_input():
 user_input = ""
 
 if content_type == "📖 Islamic Guidance":
-    greg_month = datetime.now().strftime("%B")
-    greg_year = datetime.now().year
-    hijri_date = HijriDate.today()
-    
     st.markdown(f"### 🕌 Shia Islamic Context")
     
     if "islamic_topics" not in st.session_state:
@@ -95,7 +94,7 @@ if content_type == "📖 Islamic Guidance":
     
     islamic_topic = st.selectbox("Trending Topic:",
                                ["Custom Topic"] + st.session_state.islamic_topics,
-                                help=f"Topics updated monthly ({greg_month} {greg_year})")
+                                help=f"Topics updated monthly ({gregorian_month}-{gregorian_year} / {hijri_month}-{hijri_year})")
     
     if islamic_topic == "Custom Topic":
         user_input = st.text_area("Your Shia Topic Idea:", 
@@ -130,14 +129,14 @@ else:
 
 # --- Generate Button (Centered) ---
 st.markdown('<div class="center-button">', unsafe_allow_html=True)
-if st.button("Generate Content 🌙"):
+if st.button("Generate Content ✨"):
     if not user_input.strip():
         st.error("Please enter text or record audio!")
     else:
         with st.spinner("🧠 Generating content..."):
             prompt_type = platform.lower()
             prompt = prompt_selector(
-                platform.lower(), user_input, post_length, audience_level, prompt_type
+                platform.lower(), user_input, post_length, audience_level, prompt_type, isAdvanced=advanced_mode
             )
             response_data = post_generator(prompt)
 
