@@ -1,6 +1,5 @@
 import streamlit as st
 import speech_recognition as sr
-from main import post_generator, prompt_selector  # Import topic generator function
 from main import *
 from PIL import Image
 import speech_recognition as sr
@@ -135,15 +134,6 @@ if st.button("Generate Content 🌙"):
     if not user_input.strip():
         st.error("Please enter text or record audio!")
     else:
-        with st.spinner("Generating..."):
-            result = generate_content(
-                user_input=user_input,
-                platform=platform,
-                length=post_length,
-                audience_level=audience_level,
-                islamic_mode=(content_type == "📖 Islamic Guidance"),
-                scholar=scholar if content_type == "📖 Islamic Guidance" else None,
-                islamic_topic=islamic_topic if content_type == "📖 Islamic Guidance" else None
         with st.spinner("🧠 Generating content..."):
             prompt_type = platform.lower()
             prompt = prompt_selector(

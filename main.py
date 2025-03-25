@@ -23,14 +23,15 @@ def get_completion(prompt, temp=0.9):
 
 # Extract JSON from response
 def extract_json(text):
-    match = re.search(r"\{.*\}", text, re.DOTALL)  # Extract anything between `{}` brackets
+    match = re.search(
+        r"\{.*\}", text, re.DOTALL
+    )  # Extract anything between `{}` brackets
     if match:
         try:
             return json.loads(match.group())  # Convert to Python dictionary
         except json.JSONDecodeError:
             pass
     return None
-
 
 def prompt_selector(
     input_message, platform, post_length, audience_level, prompt_type="general"
@@ -47,20 +48,6 @@ def prompt_selector(
     else:
         return general_prompt(input_message, platform, post_length, audience_level)
 
-        User Input:  
-        ```json
-        {{
-            "message": "{user_input}",
-            "target_platform": "{platform}",
-            "post_length": "{length}",
-            "audience_level": "{audience_level}"
-        }} 
-        ```
-        """
-
-    response = get_completion(prompt)
-    return extract_json(response.text)
-    
 # Get current Gregorian month and year
 gregorian_month = datetime.now().strftime("%B")  # e.g., "March"
 gregorian_year = datetime.now().year  # e.g., 2025
@@ -111,9 +98,6 @@ def get_related_questions(topic):
     """Generate 3 discussion questions related to an Islamic topic"""
     prompt = f"""
     Provide **3 trending Islamic discussion questions** about '{topic}' that are highly relevant in **{hijri_month} {hijri_year}**.
-def post_generator(prompt):
-    """Generates a social media post using AI"""
-    response_text = get_completion(prompt)
 
     - Keep each question **very short (max 7-10 words)**.
     - Focus on **what Muslims are discussing this month**.
@@ -126,3 +110,18 @@ def post_generator(prompt):
         return data.get("questions", [f"Explain {topic}", f"Importance of {topic}", f"How to practice {topic}?"])
     except:
         return [f"Explain {topic}", f"Importance of {topic}", f"How to practice {topic}?"]
+    
+def post_generator(prompt):
+    """Generates a social media post using AI"""
+    response = get_completion(prompt)  # This returns a GenerateContentResponse object
+    
+    # Try extracting JSON from the response text
+    response_data = extract_json(response.text)  # Access the .text property
+
+    if response_data:
+        return response_data  # Valid JSON found
+    else:
+        return {
+            "Generated_post": "⚠️ AI response was not in expected format. Try again.",
+            "Additional_Topics": [],
+        }

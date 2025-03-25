@@ -6,7 +6,11 @@ def general_prompt(input_message, platform, post_length, audience_level):
         - Generate a compelling idea that aligns with the chosen platform.  
         - Ensure the post includes unique facts about the chosen topic that will captivate the audience.
         - Optimize for the target audience and preferred post length.  
-        - Ensure the content is relevant, engaging, and fits the platform’s style.
+        - Keep the post within the requested length:  
+          - **Short**: 1 paragraph  
+          - **Medium**: 2 paragraphs  
+          - **Long**: 3 or more paragraphs  
+        - The writing style should match the platform’s tone and audience expectations. 
         
         Return ONLY JSON format (no extra text).  
 
