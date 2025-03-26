@@ -8,7 +8,7 @@ from ummalqura.hijri_date import HijriDate
 from prompts import *
 
 # Configure Google AI API
-google_api_key = "AIzaSyCpmcWbSmE3UwTZwNuHd3yHHQnqfyyTR30"  # Replace with your actual API key
+google_api_key = "AIzaSyCpmcWbSmE3UwTZwNuHd3yHHQnqfyyTR30"
 genai.configure(api_key=google_api_key)
 model = genai.GenerativeModel("gemini-2.0-flash")
 
@@ -48,6 +48,31 @@ def prompt_selector(input_message, platform, post_length, audience_level, prompt
     
     # Fallback to general prompt
     return general_prompt(input_message, platform, post_length, audience_level)
+
+def islamic_prompt_generator(user_input, platform, length, audience_level, scholar, islamic_topic):
+    # Build the query based on user inputs
+    base_query = ""
+    if islamic_topic != "Custom Input":
+        base_query += f"Focus on {islamic_topic}"
+    if user_input.strip() and (user_input != islamic_topic):
+        base_query += f": {user_input}" if base_query else user_input
+
+    prompt = f"""
+    Create {platform}-appropriate Islamic content that:
+    1. Combines: {base_query or 'General Islamic Teachings'}
+    2. Uses {scholar}'s methodology
+    3. Includes Quran/Hadith references
+    4. Audience level: {audience_level}
+    5. Length: {length}
+    
+    Return JSON format:
+    {{
+        "Generated_post": "Formatted content...",
+        "Additional_Topics": ["3 related topics"]
+    }}
+    """
+
+    return prompt
 
 # Get current Gregorian month and year
 gregorian_month = datetime.now().strftime("%B")  # e.g., "March"
