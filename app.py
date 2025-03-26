@@ -3,7 +3,8 @@ import speech_recognition as sr
 from main import *
 
 # --- Custom CSS ---
-st.markdown(f"""
+st.markdown(
+    f"""
 <style>
     [data-testid=stAppViewContainer] {{
         background-color: #e8d0af;
@@ -21,23 +22,32 @@ st.markdown(f"""
         margin-bottom: 0.5rem !important;
     }}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # --- Mode Selection (FIRST - at the top) ---
-content_type = st.radio("Content Type:",
+content_type = st.radio(
+    "Content Type:",
     ["📱 General Social Media", "📖 Islamic Guidance"],
     horizontal=True,
-    label_visibility="collapsed")
+    label_visibility="collapsed",
+)
 
 # --- App Structure (AFTER content_type is defined) ---
 if content_type == "📖 Islamic Guidance":
     st.image("islamic_header.png", use_column_width=True)
-    st.markdown('<h1 class="header">Islamic Wisdom Generator</h1>', unsafe_allow_html=True)
+    st.markdown(
+        '<h1 class="header">Islamic Wisdom Generator</h1>', unsafe_allow_html=True
+    )
 else:
     st.image("social_header.png", use_column_width=True)
-    st.markdown('<h1 class="header">Social Media Content Creator</h1>', unsafe_allow_html=True)
+    st.markdown(
+        '<h1 class="header">Social Media Content Creator</h1>', unsafe_allow_html=True
+    )
 
-    st.markdown(f"""
+    st.markdown(
+        f"""
 <style>
     [data-testid=stAppViewContainer] {{
         background-color: {'#e8f4f8' if content_type == "📱 General Social Media" else '#e8d0af'};
@@ -48,16 +58,19 @@ else:
         font-family: {'Helvetica' if content_type == "📱 General Social Media" else 'Times New Roman'};
     }}
 </style>
-""", unsafe_allow_html=True)
+""",
+        unsafe_allow_html=True,
+    )
 
 # --- Input Method (Hidden in Islamic Mode) ---
 if content_type == "📱 General Social Media":
-    input_mode = st.radio("Input Method:", ["Text", "Voice"], 
-                        horizontal=True, key="input_mode")
+    input_mode = st.radio(
+        "Input Method:", ["Text", "Voice"], horizontal=True, key="input_mode"
+    )
 else:
     input_mode = "Text"  # Default for Islamic mode (hidden selector)
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Core Parameters (Same Line) ---
 col1, col2, col3 = st.columns(3)
@@ -66,14 +79,19 @@ with col1:
 with col2:
     post_length = st.selectbox("Length:", ["Short", "Medium", "Long"])
 with col3:
-    audience_level = st.selectbox("Audience Level:", ["Beginner", "Intermediate", "Expert"])
+    audience_level = st.selectbox(
+        "Audience Level:", ["Beginner", "Intermediate", "Expert"]
+    )
 
 # --- Show Advanced Mode ONLY for General Social Media ---
 if content_type == "📱 General Social Media":
-    advanced_mode = st.checkbox("Advanced Mode 🚀", 
-                             help="Uses platform-specific prompts with algorithm-friendly features")
+    advanced_mode = st.checkbox(
+        "Advanced Mode 🚀",
+        help="Uses platform-specific prompts with algorithm-friendly features",
+    )
 else:
     advanced_mode = False  # Hidden in Islamic mode
+
 
 # --- Voice Input Handler ---
 def handle_voice_input():
@@ -92,34 +110,44 @@ def handle_voice_input():
                 st.error("Sorry, I couldn't understand the audio.")
             except sr.RequestError:
                 st.error("Error with the speech recognition service.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 # --- Input Handling ---
 user_input = ""
 
 if content_type == "📖 Islamic Guidance":
-    st.markdown(f"### 🕌 Shia Islamic Context")
-    
+    st.markdown(f"### 🕌 Islamic Context")
+
     if "islamic_topics" not in st.session_state:
         st.session_state.islamic_topics = get_dynamic_topics()
-    
-    scholar = st.radio("Scholar Perspective:",
-                     ["Shahid Motahari", "Imam Khamenei"],
-                     horizontal=True)
-    
-    islamic_topic = st.selectbox("Trending Topic:",
-                               ["Custom Topic"] + st.session_state.islamic_topics,
-                                help="Topics updated monthly")
-    
+
+    scholar = st.radio(
+        "Scholar Perspective:",
+        ["Shahid Motahari", "Imam Khamenei", "Imam Khomeini", "Sayyid Sistani"],
+        horizontal=True,
+    )
+
+    islamic_topic = st.selectbox(
+        "Trending Topic:",
+        ["Custom Topic"] + st.session_state.islamic_topics,
+        help="Topics updated monthly",
+    )
+
     if islamic_topic == "Custom Topic":
-        user_input = st.text_area("Your Shia Topic Idea:", 
-                                value=st.session_state.get("user_input", ""),
-                                placeholder="Enter topic/question...")
+        user_input = st.text_area(
+            "Your Islamic Topic Idea:",
+            value=st.session_state.get("user_input", ""),
+            placeholder="What's on your mind...",
+        )
     else:
-        if "last_topic" not in st.session_state or st.session_state.last_topic != islamic_topic:
+        if (
+            "last_topic" not in st.session_state
+            or st.session_state.last_topic != islamic_topic
+        ):
             st.session_state.related_questions = get_related_questions(islamic_topic)
             st.session_state.last_topic = islamic_topic
-        
+
         st.markdown("**Suggested Questions**")
         cols = st.columns(3)
         for idx, question in enumerate(st.session_state.related_questions):
@@ -127,15 +155,19 @@ if content_type == "📖 Islamic Guidance":
                 if st.button(question, key=f"q_{idx}"):
                     st.session_state.user_input = question
                     st.rerun()
-        
-        user_input = st.text_area("Refine Query:", 
-                                value=st.session_state.get("user_input", ""),
-                                placeholder="Refine your question...")
+
+        user_input = st.text_area(
+            "What's your islamic question:",
+            value=st.session_state.get("user_input", ""),
+            placeholder="Ask what's on your mind...",
+        )
 else:
     if input_mode == "Text":
-        user_input = st.text_area("Enter your idea/topic:", 
-                                value=st.session_state.get("user_input", ""),
-                                placeholder="Share your idea...")
+        user_input = st.text_area(
+            "Enter your idea/topic:",
+            value=st.session_state.get("user_input", ""),
+            placeholder="Share your idea...",
+        )
     else:
         handle_voice_input()
         user_input = st.session_state.get("user_input", "")
@@ -156,11 +188,16 @@ if st.button("Generate Content ✨"):
                     length=post_length,
                     audience_level=audience_level,
                     scholar=scholar,
-                    islamic_topic=islamic_topic
+                    islamic_topic=islamic_topic,
                 )
             else:
                 prompt = prompt_selector(
-                    platform.lower(), user_input, post_length, audience_level, prompt_type, isAdvanced=advanced_mode
+                    platform.lower(),
+                    user_input,
+                    post_length,
+                    audience_level,
+                    prompt_type,
+                    isAdvanced=advanced_mode,
                 )
             response_data = post_generator(prompt)
 
@@ -169,10 +206,11 @@ if st.button("Generate Content ✨"):
 
 # --- Display Results ---
 if "generated_post" in st.session_state:
-    bg_color = '#f8f4e8' if content_type == "📖 Islamic Guidance" else '#ffffff'
-    border_color = '#3d6b35' if content_type == "📖 Islamic Guidance" else '#1DA1F2'
-    
-    st.markdown(f"""
+    bg_color = "#f8f4e8" if content_type == "📖 Islamic Guidance" else "#ffffff"
+    border_color = "#3d6b35" if content_type == "📖 Islamic Guidance" else "#1DA1F2"
+
+    st.markdown(
+        f"""
     <div style="
         background: {bg_color};
         padding: 1.5rem;
@@ -183,7 +221,9 @@ if "generated_post" in st.session_state:
     ">
         {st.session_state.generated_post}
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 if "additional_topics" in st.session_state and st.session_state.additional_topics:
     st.markdown("### 🔍 Related Topics")

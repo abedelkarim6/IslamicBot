@@ -210,3 +210,38 @@ def linkedin_prompt(input_message, platform, post_length, audience_level):
         }}  
         ```  
     """
+
+
+def rag_prompt(input_message, platform, post_length, audience_level, relevant_context):
+    return f"""
+         Your task is to generate an engaging social media post using the context given below.  
+
+        - Utilize the provided chunks as a knowledge base to craft an informative and captivating post.  
+        - Analyze the user's intent and ensure the content aligns with the chosen platform.  
+        - Structure the post to highlight unique insights from the retrieved information.  
+        - Optimize for the target audience, preferred post length, and platform-specific style.  
+        - Ensure coherence, fluency, and engagement while maintaining factual accuracy.  
+
+        Return ONLY JSON format (no extra text).  
+
+        **Strictly format response as JSON:**  
+        ```json
+        {{
+            "Generated_post": "Engaging post text",
+            "Additional_Topics": ["Topic 1", "Topic 2", "Topic 3"]
+        }}
+        ```
+
+        User Input:  
+        ```json
+        {{
+            "message": "{input_message}",
+            "target_platform": "{platform}",
+            "post_length": "{post_length}",
+            "audience_level": "{audience_level}"
+        }} 
+        ```
+        main title: {input_message}
+        context: {relevant_context}
+
+    """
