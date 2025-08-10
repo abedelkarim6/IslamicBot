@@ -1,6 +1,6 @@
 def general_prompt(input_message, platform, post_length, audience_level):
     return f"""
-        Your task is to generate engaging social media posts based on the given user input.  
+        Your task is to generate engaging social media posts based on the given user input.
 
         - Analyze the user's message intent and context.  
         - Generate a compelling idea that aligns with the chosen platform.  
